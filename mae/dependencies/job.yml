@@ -14,6 +14,7 @@ command: >-
   --img_size ${{inputs.img_size}} 
   --learning_rate ${{inputs.learning_rate}} 
   --weight_decay ${{inputs.weight_decay}}
+  --output_dir ${{outputs.output_dir}}
 inputs:
   data:
     type: uri_folder
@@ -26,26 +27,29 @@ inputs:
   valset:
     type: uri_file
     path: azureml://subscriptions/781b03e7-6eb7-4506-bab8-cf3a0d89b1d4/resourcegroups/antonslutsky-rg/workspaces/gpu-workspace/datastores/workspaceblobstore/paths/UI/2023-12-05_190801_UTC/ImageNet_1000_val.csv
-    mode: ro_mount         
-
-  num_epochs: 500
-  batch_size: 129
-  num_workers: 3
-  num_nodes: 1
+    mode: ro_mount        
+  num_epochs: 1
+  batch_size: 12
+  num_workers: 10
+  num_nodes: 4
   num_devices: 1
-  strategy: deepspeed_stage_1
+  #strategy: deepspeed_stage_3
+  strategy: "deepspeed"
+  #strategy: set_strategy(args)
   img_size: 224
   learning_rate: 5e-4
   weight_decay: 0.05
-
+outputs:
+  output_dir:
+    type: uri_folder
+    mode: upload
 environment: azureml:godzilla-environment@latest
 resources:
-  instance_count: 3
-  shm_size: 1000G
+  instance_count: 4
 distribution:
   type: pytorch 
   process_count_per_instance: 1
-compute: azureml:minizilla-1xV100x4-cluster
+compute: azureml:four-nodes
 display_name: mae_trainer
 experiment_name: mae_trainer
 description: Train a Machine Learning model using a workspace Data asset.

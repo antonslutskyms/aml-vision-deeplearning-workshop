@@ -3,37 +3,17 @@
 # ---------------------------------------------------------
 
 import argparse
-import torch, os, sys
-#from deepspeed.ops.adam import FusedAdam
+from torch import optim
 from azureml.core import Run
 from pytorch_lightning import LightningModule, Trainer, seed_everything
 from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, RichModelSummary
-from os.path import join
 from datasets.mae_datasets import make_dataloaders
 import argparse
 from utils.utils import display_environment
 from utils.openmpi import set_strategy
-from torch import optim
 from models.models_mae import mae_vit_huge_patch14_dec512d8b
-import timm
-from torch import optim, nn, utils
-from torchvision.datasets import ImageFolder
-from torchvision.transforms import transforms
-import torch, os, sys
-#from deepspeed.ops.adam import FusedAdam
-from azureml.core import Run
-from pytorch_lightning import LightningModule, Trainer, seed_everything
-from pytorch_lightning.loggers import MLFlowLogger
-from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, RichModelSummary
-from os.path import join
-from datasets.mae_datasets import make_dataloaders
-import argparse
-from utils.utils import display_environment
-from utils.openmpi import set_strategy
-from torch import optim
-from models.models_mae import mae_vit_huge_patch14_dec512d8b
-import timm
+import os
 
 
 
@@ -88,14 +68,15 @@ def parse_args():
     parser.add_argument("--precision",type=int, default=32)
     parser.add_argument("--learning_rate",type=float, default=1e-4)
     parser.add_argument("--weight_decay",type=float, required=False, default=0)
+    parser.add_argument("--output_dir", type=str)   
     
     args = parser.parse_args()
 
     return args
 
 if __name__ == "__main__":
-
-    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
+    print("Test run")
+    #os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
     
     args = parse_args()
     # If running on azure, get the active tracking uri and run id
@@ -127,12 +108,17 @@ if __name__ == "__main__":
     )
 
     display_environment("__main__")
+
+    print(f"OUTPUT DIR: {args.output_dir}")
     
+    global_rank = int(os.environ.get('RANK'))
+
     checkpoint_callback = ModelCheckpoint(monitor="val_loss", 
                                           mode="min",
                                           save_top_k=999,
                                           verbose=True,
-                                          dirpath="./outputs/checkpoints/",
+                                          #dirpath="./outputs/checkpoint",
+                                          dirpath="./outputs/checkpoint",
                                           filename="{epoch}-{val_loss:.2f}",
                                           save_weights_only=True,
                                           auto_insert_metric_name=True)  
@@ -151,12 +137,26 @@ if __name__ == "__main__":
         max_epochs=args.num_epochs,
         enable_model_summary=False,
         callbacks = [checkpoint_callback,lr_monitor,model_summary],
-        #strategy=set_strategy(args),
-        strategy=args.strategy,
+        strategy=set_strategy(args),
         precision=args.precision
     )
 
-    display_environment("__main__")
+    # trainer = Trainer(
+    #     num_nodes=args.num_nodes,
+    #     accelerator='gpu',
+    #     devices=args.num_devices,
+    #     log_every_n_steps=1,
+    #     logger=logger,
+    #     num_sanity_val_steps=2,
+    #     max_epochs=args.num_epochs,
+    #     enable_model_summary=False,
+    #     callbacks = [checkpoint_callback,lr_monitor,model_summary],
+    #     strategy=set_strategy(args),
+    #     #strategy=args.strategy,
+    #     precision=args.precision
+    # )
+
+#     display_environment("__main__")
 
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
@@ -164,3 +164,4 @@ if __name__ == "__main__":
 trainer.global_rank : {trainer.global_rank}
 trainer.world_size : {trainer.world_size}
 """)
+    print("Done ...............")

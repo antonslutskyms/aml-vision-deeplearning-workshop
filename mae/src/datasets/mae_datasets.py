@@ -64,7 +64,7 @@ def collate_fn(batch):
 
 def make_dataloaders(args):
     
-    print("Creating dataloaders.......... !!!!!!!!!!!!!!!!!!!!!")
+    print("Creating dataloaders.......... ")
 
     tfs_train = transforms.Compose([
             SquarePad(),
@@ -90,11 +90,8 @@ def make_dataloaders(args):
     df_train = pd.read_csv(args.trainset)
     df_val = pd.read_csv(args.valset)
 
-    print("**********************************************************")
     print("Trainset: ", df_train.head())
     print("Valset: ", df_val.head())
-
-    print("!!!!! ********************************************************** !!!!!!!")
 
     train_dataset = ImageDatasetMP(source_dir=args.dataset_directory_name,
                                    df=df_train,
@@ -104,7 +101,6 @@ def make_dataloaders(args):
                                  df=df_val,
                                  transform=tfs_val)
     
-    print("????? ********************************************************** ??????")
     print("train_dataset[1]", train_dataset[1])
 
     

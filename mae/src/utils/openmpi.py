@@ -2,6 +2,8 @@ from pytorch_lightning.plugins.environments import ClusterEnvironment
 from pytorch_lightning.strategies import DeepSpeedStrategy
 import os
 
+# pytorch-lightning==1.8.6
+
 
 class OpenMPIClusterEnvironment(ClusterEnvironment):
     def __init__(self, devices: int = 1) -> None:
@@ -60,12 +62,12 @@ class OpenMPIClusterEnvironment(ClusterEnvironment):
         return "OMPI_COMM_WORLD_SIZE" in os.environ
     
 def set_strategy(args):
-    if args.strategy == "ddp":
-        return "ddp"
-    elif args.strategy == "deepspeed":
-        return DeepSpeedStrategy(
-            stage = 3,
-            cluster_environment = OpenMPIClusterEnvironment(devices=args.num_devices)
-        )
-    else:
-        return None
+    # if args.strategy == "ddp":
+    #     return "ddp"
+    # elif args.strategy == "deepspeed":
+    return DeepSpeedStrategy(
+        stage = 3,
+#        cluster_environment = OpenMPIClusterEnvironment(devices=args.num_devices)
+    )
+    # else:
+    #     return None
